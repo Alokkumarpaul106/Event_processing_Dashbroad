@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NorthBridge Garments - Production Dashboard</title>
+<style>
+  :root { --bg:#f4f6f8; --card:#fff; --ink:#1b2430; --mute:#667085; --line:#e4e7ec; --brand:#1d4ed8;
+          --ok:#067647; --okbg:#ecfdf3; --warn:#b54708; --warnbg:#fffaeb; --bad:#b42318; --badbg:#fef3f2; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:#0f172a; color:#fff; padding:14px 20px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
+  header h1 { font-size:18px; margin:0; }
+  header small { color:#cbd5e1; display:block; font-weight:400; }
+  main { max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .card h2 { margin:0 0 10px; font-size:16px; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .grid6 { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .ind { border:1px solid var(--line); border-radius:10px; padding:12px; background:#fff; }
+  .ind .n { font-size:28px; font-weight:700; }
+  .ind .l { color:var(--mute); font-size:13px; }
+  .ind.warn { background:var(--warnbg); } .ind.bad { background:var(--badbg); }
+  textarea { width:100%; min-height:130px; font:13px/1.4 ui-monospace,Menlo,Consolas,monospace; padding:10px; border:1px solid var(--line); border-radius:8px; }
+  button { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--brand); background:var(--brand); color:#fff; cursor:pointer; }
+  button.sec { background:#fff; color:var(--brand); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  select, input[type=text] { font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:8px; }
+  .tabs button { border-radius:8px 8px 0 0; }
+  .tabs button.active { background:var(--brand); color:#fff; } .tabs button:not(.active) { background:#fff; color:var(--brand); }
+  .tablewrap { overflow-x:auto; border:1px solid var(--line); border-radius:0 8px 8px 8px; }
+  table { border-collapse:collapse; width:100%; min-width:640px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top; }
+  th { background:#f9fafb; color:var(--mute); font-weight:600; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+  .b-ok { background:var(--okbg); color:var(--ok); } .b-warn { background:var(--warnbg); color:var(--warn); } .b-bad { background:var(--badbg); color:var(--bad); } .b-mute { background:#f2f4f7; color:var(--mute); }
+  .msg { padding:10px 12px; border-radius:8px; margin-top:10px; font-size:14px; }
+  .msg.err { background:var(--badbg); color:var(--bad); } .msg.okm { background:var(--okbg); color:var(--ok); } .msg.info { background:#eff6ff; color:#1e40af; }
+  .empty, .loading { padding:22px; text-align:center; color:var(--mute); }
+  dl { display:grid; grid-template-columns:max-content 1fr; gap:6px 14px; margin:0; }
+  dt { color:var(--mute); } dd { margin:0; word-break:break-all; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:#98a2b3; margin-right:6px; }
+  .dot.on { background:#12b76a; } .dot.off { background:#f04438; }
+  ul.res { margin:8px 0 0; padding-left:18px; } ul.res li { margin:3px 0; }
+  .who { color:var(--mute); font-size:13px; margin:0 0 6px; }
+  @media (max-width:560px) { header { padding:12px; } main { padding:10px; } .ind .n { font-size:24px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>NorthBridge Garments <small>Production event dashboard &middot; CSI Smart Tech demo</small></h1>
+  <div class="row"><span><span class="dot" id="hdrDot"></span><span id="hdrMqtt">MQTT: checking...</span></span>
+    <label>Line <select id="srcFilter"><option value="">All lines</option></select></label>
+    <button class="sec" id="refreshBtn" style="background:#fff">Refresh</button></div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Totals</h2>
+    <p class="who">For the <b>production supervisor</b>: reliable totals at a glance. Amber/red numbers need attention.</p>
+    <div class="grid6" id="indicators"><div class="loading">Loading...</div></div>
+  </section>
+
+  <section class="card">
+    <h2>Submit an event (factory floor operator)</h2>
+    <p class="who">Paste ONE JSON event or a JSON array, then submit. Use a template to start.</p>
+    <div class="row" style="margin-bottom:8px">
+      <button class="sec" data-tpl="count">COUNT +5 (LINE-01)</button>
+      <button class="sec" data-tpl="dup">Same event again</button>
+      <button class="sec" data-tpl="void_early">VOID before COUNT</button>
+      <button class="sec" data-tpl="void_target">The target COUNT</button>
+      <button class="sec" data-tpl="bad">Invalid event</button>
+    </div>
+    <textarea id="eventInput" spellcheck="false" placeholder='{"source_id":"LINE-01","event_id":"EV-101","type":"COUNT","quantity":5,"target_event_id":null,"event_time":"2026-10-09T10:30:00Z"}'></textarea>
+    <div class="row" style="margin-top:8px"><button id="submitBtn">Submit</button><span id="submitState" class="who" style="margin:0"></span></div>
+    <div id="submitResult"></div>
+  </section>
+
+  <section class="card">
+    <h2>Review (supervisor / support)</h2>
+    <div class="tabs row" style="gap:4px">
+      <button id="tabPending" class="active">Pending acknowledgement</button>
+      <button id="tabExc">Exceptions</button>
+    </div>
+    <div class="tablewrap" id="tableBox"><div class="loading">Loading...</div></div>
+    <div class="row" id="ackBar" style="margin-top:10px">
+      <button id="ackBtn" disabled>Acknowledge selected (0)</button>
+      <button class="sec" id="selAll">Select all</button>
+      <span id="ackState" class="who" style="margin:0"></span>
+    </div>
+    <div id="ackResult"></div>
+  </section>
+
+  <section class="card">
+    <h2>MQTT device connection (support / engineering)</h2>
+    <div id="mqttBox"><div class="loading">Loading...</div></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const fmt = (t) => (t ? new Date(t).toLocaleString() : '-');
+  let tab = 'pending';
+  let selected = new Set();
+  let busy = false;
+
+  async function api(path, opts) {
+    let res;
+    try { res = await fetch(path, opts); } catch { throw new Error('Cannot reach the server. Is the backend running?'); }
+    let body = null;
+    try { body = await res.json(); } catch { /* non-JSON */ }
+    if (!res.ok) throw new Error(body?.error || `Request failed (HTTP ${res.status})`);
+    return body;
+  }
+  const post = (path, data) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const src = () => $('srcFilter').value;
+  const qs = (view) => `/api/state?view=${view}${src() ? `&source_id=${encodeURIComponent(src())}` : ''}`;
+
+  const badge = (s) => {
+    const cls = { ACCEPTED:'b-ok', PROCESSED:'b-ok', ACKED:'b-ok', DUPLICATE:'b-warn', PENDING_REFERENCE:'b-warn', ALREADY_ACKED:'b-warn', NOT_READY:'b-warn', CONFLICT:'b-bad', REJECTED:'b-bad', NOT_FOUND:'b-bad', COMPLETED:'b-ok', FAILED:'b-bad' }[s] || 'b-mute';
+    return `<span class="badge ${cls}">${esc(s)}</span>`;
+  };
+
+  /* ---------- indicators + MQTT ---------- */
+  function renderIndicators(s) {
+    const items = [
+      ['net_total', 'Net total', ''], ['processed_events', 'Processed events', ''],
+      ['pending_ack', 'Pending acknowledgement', s.pending_ack ? 'warn' : ''],
+      ['unresolved', 'Unresolved references', s.unresolved ? 'warn' : ''],
+      ['duplicates', 'Duplicates', s.duplicates ? 'warn' : ''], ['conflicts', 'Conflicts', s.conflicts ? 'bad' : ''],
+    ];
+    $('indicators').innerHTML = items.map(([k, l, c]) => `<div class="ind ${c}"><div class="n">${esc(s[k])}</div><div class="l">${l}</div></div>`).join('');
+  }
+
+  function renderMqtt(m) {
+    const on = m.connected;
+    $('hdrDot').className = 'dot ' + (on ? 'on' : 'off');
+    $('hdrMqtt').textContent = m.enabled ? `MQTT: ${on ? 'online' : 'offline'}` : 'MQTT: disabled';
+    const c = m.challenge_counts || {};
+    $('mqttBox').innerHTML = `<dl>
+      <dt>Connection</dt><dd><span class="dot ${on ? 'on' : 'off'}"></span>${m.enabled ? (on ? 'Connected' : 'Disconnected (retrying)') : 'Worker disabled'}</dd>
+      <dt>Broker</dt><dd>${esc(m.broker || '-')}</dd>
+      <dt>Candidate ID</dt><dd>${esc(m.candidate_id || '-')}</dd>
+      <dt>Last heartbeat</dt><dd>${fmt(m.last_heartbeat_at)}</dd>
+      <dt>Last challenge</dt><dd>${esc(m.last_challenge_id || 'none yet')} ${m.last_challenge_at ? '&middot; ' + fmt(m.last_challenge_at) : ''}</dd>
+      <dt>Last response</dt><dd>${m.last_response_status ? badge(m.last_response_status) : '-'}</dd>
+      <dt>Challenges</dt><dd>${c.total ?? 0} total &middot; ${c.completed ?? 0} completed &middot; ${c.failed ?? 0} failed</dd>
+      <dt>Last error</dt><dd>${m.last_error ? `<span class="badge b-bad">${esc(m.last_error.code)}</span> ${esc(m.last_error.message)}` : 'none'}</dd>
+    </dl>`;
+  }
+
+  async function loadSummary() {
+    try { const s = await api(qs('summary')); renderIndicators(s); renderMqtt(s.mqtt); }
+    catch (e) { $('indicators').innerHTML = `<div class="msg err" style="grid-column:1/-1">${esc(e.message)}</div>`; $('hdrMqtt').textContent = 'Server unreachable'; $('hdrDot').className = 'dot off'; }
+  }
+
+  /* ---------- pending / exceptions table ---------- */
+  function updateAckBtn() {
+    $('ackBtn').textContent = `Acknowledge selected (${selected.size})`;
+    $('ackBtn').disabled = busy || selected.size === 0;
+  }
+
+  async function loadTable() {
+    $('tableBox').innerHTML = '<div class="loading">Loading...</div>';
+    $('ackBar').style.display = tab === 'pending' ? 'flex' : 'none';
+    try {
+      const data = await api(qs(tab === 'pending' ? 'pending' : 'exceptions'));
+      let items = data.items;
+      if (tab === 'pending') items = items.filter((i) => i.type === 'COUNT'); // VOID corrections auto-acknowledge
+      const valid = new Set(items.map((i) => i.event_id));
+      selected = new Set([...selected].filter((id) => valid.has(id)));
+      if (!items.length) {
+        $('tableBox').innerHTML = `<div class="empty">${tab === 'pending' ? 'Nothing waiting for review. All processed counts are acknowledged.' : 'No exceptions. No rejected, conflicting or unresolved items.'}</div>`;
+      } else if (tab === 'pending') {
+        $('tableBox').innerHTML = `<table><thead><tr><th></th><th>Event</th><th>Line</th><th>Type</th><th>Qty</th><th>Event time</th><th>Received</th><th>Status</th></tr></thead><tbody>${items.map((i) =>
+          `<tr><td><input type="checkbox" data-id="${esc(i.event_id)}" ${selected.has(i.event_id) ? 'checked' : ''} aria-label="select ${esc(i.event_id)}"></td><td>${esc(i.event_id)}</td><td>${esc(i.source_id)}</td><td>${esc(i.type)}</td><td>${esc(i.quantity)}</td><td>${fmt(i.event_time)}</td><td>${fmt(i.received_at)}</td><td>${badge(i.status)}</td></tr>`).join('')}</tbody></table>`;
+        $('tableBox').querySelectorAll('input[type=checkbox]').forEach((cb) => cb.addEventListener('change', () => {
+          cb.checked ? selected.add(cb.dataset.id) : selected.delete(cb.dataset.id); updateAckBtn();
+        }));
+      } else {
+        $('tableBox').innerHTML = `<table><thead><tr><th>Event</th><th>Line</th><th>Type</th><th>Qty</th><th>Target</th><th>Status</th><th>Reason</th><th>Received</th></tr></thead><tbody>${items.map((i) =>
+          `<tr><td>${esc(i.event_id || '-')}</td><td>${esc(i.source_id || '-')}</td><td>${esc(i.type || '-')}</td><td>${esc(i.quantity ?? '-')}</td><td>${esc(i.target_event_id || '-')}</td><td>${badge(i.status)}</td><td>${esc(i.reason)}</td><td>${fmt(i.received_at)}</td></tr>`).join('')}</tbody></table>`;
+      }
+    } catch (e) { $('tableBox').innerHTML = `<div class="msg err" style="margin:10px">${esc(e.message)}</div>`; }
+    updateAckBtn();
+  }
+
+  async function loadSources() {
+    const current = src();
+    try {
+      const summary = await api('/api/state?view=summary');
+      const ids = new Set(summary.sources || []);
+      if (current) ids.add(current);
+      $('srcFilter').innerHTML = '<option value="">All lines</option>' + [...ids].sort().map((s) => `<option ${s === current ? 'selected' : ''}>${esc(s)}</option>`).join('');
+    } catch { /* keep current options */ }
+  }
+
+  const refreshAll = () => Promise.all([loadSummary(), loadTable()]);
+
+  /* ---------- submit ---------- */
+  const T = (o) => JSON.stringify({ source_id: 'LINE-01', target_event_id: null, quantity: null, event_time: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), ...o }, null, 2);
+  const templates = {
+    count: () => T({ event_id: 'EV-101', type: 'COUNT', quantity: 5 }),
+    dup: () => $('eventInput').value || T({ event_id: 'EV-101', type: 'COUNT', quantity: 5 }),
+    void_early: () => T({ event_id: 'EV-V1', type: 'VOID', target_event_id: 'EV-102' }),
+    void_target: () => T({ event_id: 'EV-102', type: 'COUNT', quantity: 3 }),
+    bad: () => T({ event_id: 'EV-BAD', type: 'COUNT', quantity: -2 }),
+  };
+  document.querySelectorAll('[data-tpl]').forEach((b) => b.addEventListener('click', () => { $('eventInput').value = templates[b.dataset.tpl](); $('submitResult').innerHTML = ''; }));
+
+  $('submitBtn').addEventListener('click', async () => {
+    const text = $('eventInput').value.trim();
+    $('submitResult').innerHTML = '';
+    if (!text) { $('submitResult').innerHTML = '<div class="msg err">Enter a JSON event or array first.</div>'; return; }
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (e) { $('submitResult').innerHTML = `<div class="msg err">Invalid JSON: ${esc(e.message)}</div>`; return; }
+    if (parsed === null || typeof parsed !== 'object') { $('submitResult').innerHTML = '<div class="msg err">Input must be a JSON object or an array of objects.</div>'; return; }
+    $('submitBtn').disabled = true; $('submitState').textContent = 'Submitting...';
+    try {
+      const out = await post('/api/events', parsed);
+      $('submitResult').innerHTML = `<div class="msg info"><b>Server result</b><ul class="res">${out.results.map((r) => `<li>${badge(r.status)} <b>${esc(r.event_id ?? '(no id)')}</b> &mdash; ${esc(r.message)}</li>`).join('')}</ul></div>`;
+      await Promise.all([refreshAll(), loadSources()]);
+    } catch (e) { $('submitResult').innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
+    finally { $('submitBtn').disabled = false; $('submitState').textContent = ''; }
+  });
+
+  /* ---------- acknowledge ---------- */
+  $('ackBtn').addEventListener('click', async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    busy = true; updateAckBtn(); $('ackState').textContent = 'Acknowledging...'; $('ackResult').innerHTML = '';
+    try {
+      const out = await post('/api/ack', { event_ids: ids });
+      $('ackResult').innerHTML = `<div class="msg okm"><ul class="res" style="margin:0">${out.results.map((r) => `<li>${badge(r.status)} <b>${esc(r.event_id)}</b> &mdash; ${esc(r.message)}</li>`).join('')}</ul></div>`;
+      selected.clear();
+      await refreshAll();
+    } catch (e) { $('ackResult').innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
+    finally { busy = false; $('ackState').textContent = ''; updateAckBtn(); }
+  });
+  $('selAll').addEventListener('click', () => {
+    const boxes = $('tableBox').querySelectorAll('input[type=checkbox]');
+    const all = [...boxes].every((b) => b.checked);
+    boxes.forEach((b) => { b.checked = !all; all ? selected.delete(b.dataset.id) : selected.add(b.dataset.id); });
+    updateAckBtn();
+  });
+
+  /* ---------- tabs / filters / polling ---------- */
+  const setTab = (t) => { tab = t; $('tabPending').classList.toggle('active', t === 'pending'); $('tabExc').classList.toggle('active', t === 'exceptions'); $('ackResult').innerHTML = ''; loadTable(); };
+  $('tabPending').addEventListener('click', () => setTab('pending'));
+  $('tabExc').addEventListener('click', () => setTab('exceptions'));
+  $('srcFilter').addEventListener('change', () => { selected.clear(); refreshAll(); });
+  $('refreshBtn').addEventListener('click', () => { refreshAll(); loadSources(); });
+
+  loadSources(); refreshAll();
+  setInterval(() => { if (!document.hidden) { loadSummary(); if (!busy) loadTable(); } }, 5000);
+})();
+</script>
+</body>
+</html>
