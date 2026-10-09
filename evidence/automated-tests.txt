@@ -1,0 +1,6 @@
+﻿Command: ..\venv\Scripts\python.exe manage.py test
+
+Found 8 test(s).
+Ran 8 tests in 0.139s
+OK
+System check identified no issues (0 silenced).

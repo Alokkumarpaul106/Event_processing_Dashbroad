@@ -1,0 +1,50 @@
+﻿{
+    "transport":  "local challenge handler; no broker connection",
+    "replay_matches_stored_response":  true,
+    "first_response":  {
+                           "protocol_version":  "1.0",
+                           "candidate_id":  "CAND-LOCAL-DEMO",
+                           "challenge_id":  "CH-ASSESS-LOCAL-001",
+                           "status":  "COMPLETED",
+                           "processed_at":  "2026-10-09T08:43:18.909Z",
+                           "results":  [
+                                           {
+                                               "event_id":  "EV-MQTT-LOCAL-001",
+                                               "status":  "ACCEPTED",
+                                               "message":  "Event processed"
+                                           }
+                                       ],
+                           "state":  {
+                                         "net_total":  509,
+                                         "processed_events":  3,
+                                         "pending_ack":  2,
+                                         "unresolved":  0,
+                                         "duplicates":  1,
+                                         "conflicts":  0,
+                                         "rejected_submissions":  1
+                                     }
+                       },
+    "replayed_response":  {
+                              "protocol_version":  "1.0",
+                              "candidate_id":  "CAND-LOCAL-DEMO",
+                              "challenge_id":  "CH-ASSESS-LOCAL-001",
+                              "status":  "COMPLETED",
+                              "processed_at":  "2026-10-09T08:43:18.909Z",
+                              "results":  [
+                                              {
+                                                  "event_id":  "EV-MQTT-LOCAL-001",
+                                                  "status":  "ACCEPTED",
+                                                  "message":  "Event processed"
+                                              }
+                                          ],
+                              "state":  {
+                                            "net_total":  509,
+                                            "processed_events":  3,
+                                            "pending_ack":  2,
+                                            "unresolved":  0,
+                                            "duplicates":  1,
+                                            "conflicts":  0,
+                                            "rejected_submissions":  1
+                                        }
+                          }
+}

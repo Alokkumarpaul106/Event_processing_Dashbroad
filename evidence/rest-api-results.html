@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REST API verification</title><style>
+*{box-sizing:border-box} body{margin:0;padding:32px;background:#f4f6f8;color:#172033;font:15px/1.5 system-ui,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto} header,section{background:white;border:1px solid #d9dee8;border-radius:12px;padding:20px;margin-bottom:16px}
+h1{margin:0 0 6px} h2{font-size:17px;margin:0 0 12px} p{margin:0;color:#475467}
+pre{margin:0;padding:16px;border-radius:8px;overflow:auto;background:#0f172a;color:#e2e8f0;font:13px/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+.note{border-left:4px solid #b54708;padding-left:12px;margin-top:12px;color:#7a2e0e}
+</style><main><header><h1>REST API verification</h1><p>Captured JSON responses from HTTP requests to the temporary local Django server.</p></header><section><h2>POST /api/events — COUNT 500 accepted</h2><pre>{
+  &quot;results&quot;: [
+    {
+      &quot;event_id&quot;: &quot;EV-ASSESS-500&quot;,
+      &quot;status&quot;: &quot;ACCEPTED&quot;,
+      &quot;message&quot;: &quot;Event processed&quot;
+    }
+  ]
+}</pre></section>
+<section><h2>POST /api/events — identical delivery classified DUPLICATE</h2><pre>{
+  &quot;results&quot;: [
+    {
+      &quot;event_id&quot;: &quot;EV-ASSESS-500&quot;,
+      &quot;status&quot;: &quot;DUPLICATE&quot;,
+      &quot;message&quot;: &quot;Identical event already received; not processed again&quot;
+    }
+  ]
+}</pre></section>
+<section><h2>POST /api/events — COUNT 501 rejected</h2><pre>{
+  &quot;results&quot;: [
+    {
+      &quot;event_id&quot;: &quot;EV-ASSESS-501&quot;,
+      &quot;status&quot;: &quot;REJECTED&quot;,
+      &quot;message&quot;: &quot;COUNT quantity must be an integer from 1 to 500, inclusive&quot;,
+      &quot;reason&quot;: &quot;COUNT quantity must be an integer from 1 to 500, inclusive&quot;
+    }
+  ]
+}</pre></section>
+<section><h2>POST /api/events — acknowledgement example accepted</h2><pre>{
+  &quot;results&quot;: [
+    {
+      &quot;event_id&quot;: &quot;EV-ASSESS-ACK&quot;,
+      &quot;status&quot;: &quot;ACCEPTED&quot;,
+      &quot;message&quot;: &quot;Event processed&quot;
+    }
+  ]
+}</pre></section>
+<section><h2>POST /api/ack</h2><pre>{
+  &quot;results&quot;: [
+    {
+      &quot;event_id&quot;: &quot;EV-ASSESS-ACK&quot;,
+      &quot;status&quot;: &quot;ACKED&quot;,
+      &quot;message&quot;: &quot;Acknowledged&quot;
+    }
+  ]
+}</pre></section>
+<section><h2>GET /api/state?view=summary&amp;source_id=LINE-ASSESS-01</h2><pre>{
+  &quot;view&quot;: &quot;summary&quot;,
+  &quot;source_id&quot;: &quot;LINE-ASSESS-01&quot;,
+  &quot;net_total&quot;: 506,
+  &quot;processed_events&quot;: 2,
+  &quot;pending_ack&quot;: 1,
+  &quot;unresolved&quot;: 0,
+  &quot;duplicates&quot;: 1,
+  &quot;conflicts&quot;: 0,
+  &quot;rejected_submissions&quot;: 1,
+  &quot;sources&quot;: [
+    &quot;LINE-ASSESS-01&quot;
+  ],
+  &quot;mqtt&quot;: {
+    &quot;enabled&quot;: true,
+    &quot;connected&quot;: false,
+    &quot;candidate_id&quot;: &quot;CAND-XXX&quot;,
+    &quot;broker&quot;: &quot;mqtt://152.42.238.142:1883&quot;,
+    &quot;last_heartbeat_at&quot;: null,
+    &quot;last_challenge_id&quot;: null,
+    &quot;last_challenge_at&quot;: null,
+    &quot;last_response_status&quot;: null,
+    &quot;challenge_counts&quot;: {
+      &quot;total&quot;: 0,
+      &quot;completed&quot;: 0,
+      &quot;failed&quot;: 0
+    },
+    &quot;last_error&quot;: null
+  }
+}</pre></section>
+<section><h2>GET /api/state?view=pending&amp;source_id=LINE-ASSESS-01</h2><pre>{
+  &quot;view&quot;: &quot;pending&quot;,
+  &quot;source_id&quot;: &quot;LINE-ASSESS-01&quot;,
+  &quot;count&quot;: 1,
+  &quot;items&quot;: [
+    {
+      &quot;source_id&quot;: &quot;LINE-ASSESS-01&quot;,
+      &quot;event_id&quot;: &quot;EV-ASSESS-500&quot;,
+      &quot;type&quot;: &quot;COUNT&quot;,
+      &quot;quantity&quot;: 500,
+      &quot;target_event_id&quot;: null,
+      &quot;event_time&quot;: &quot;2026-10-09T08:41:57.000Z&quot;,
+      &quot;received_at&quot;: &quot;2026-10-09T08:41:57.554Z&quot;,
+      &quot;status&quot;: &quot;PROCESSED&quot;
+    }
+  ]
+}</pre></section>
+<section><h2>GET /api/state?view=exceptions&amp;source_id=LINE-ASSESS-01</h2><pre>{
+  &quot;view&quot;: &quot;exceptions&quot;,
+  &quot;source_id&quot;: &quot;LINE-ASSESS-01&quot;,
+  &quot;count&quot;: 1,
+  &quot;items&quot;: [
+    {
+      &quot;kind&quot;: &quot;ATTEMPT&quot;,
+      &quot;source_id&quot;: &quot;LINE-ASSESS-01&quot;,
+      &quot;event_id&quot;: &quot;EV-ASSESS-501&quot;,
+      &quot;type&quot;: &quot;COUNT&quot;,
+      &quot;quantity&quot;: 501,
+      &quot;target_event_id&quot;: null,
+      &quot;event_time&quot;: null,
+      &quot;status&quot;: &quot;REJECTED&quot;,
+      &quot;reason&quot;: &quot;COUNT quantity must be an integer from 1 to 500, inclusive&quot;,
+      &quot;received_at&quot;: &quot;2026-10-09T08:41:57.653Z&quot;
+    }
+  ]
+}</pre></section></main></html>

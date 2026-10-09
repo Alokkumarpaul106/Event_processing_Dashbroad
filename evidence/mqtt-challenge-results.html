@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MQTT challenge handler verification</title><style>
+*{box-sizing:border-box} body{margin:0;padding:32px;background:#f4f6f8;color:#172033;font:15px/1.5 system-ui,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto} header,section{background:white;border:1px solid #d9dee8;border-radius:12px;padding:20px;margin-bottom:16px}
+h1{margin:0 0 6px} h2{font-size:17px;margin:0 0 12px} p{margin:0;color:#475467}
+pre{margin:0;padding:16px;border-radius:8px;overflow:auto;background:#0f172a;color:#e2e8f0;font:13px/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+.note{border-left:4px solid #b54708;padding-left:12px;margin-top:12px;color:#7a2e0e}
+</style><main><header><h1>MQTT challenge handler verification</h1><p>Local database-backed handler replay check. This report does not claim a live broker connection.</p></header><section><h2>Transport and replay assertion</h2><pre>{
+  &quot;transport&quot;: &quot;local challenge handler; no broker connection&quot;,
+  &quot;replay_matches_stored_response&quot;: true
+}</pre></section>
+<section><h2>First response</h2><pre>{
+  &quot;protocol_version&quot;: &quot;1.0&quot;,
+  &quot;candidate_id&quot;: &quot;CAND-LOCAL-DEMO&quot;,
+  &quot;challenge_id&quot;: &quot;CH-ASSESS-LOCAL-001&quot;,
+  &quot;status&quot;: &quot;COMPLETED&quot;,
+  &quot;processed_at&quot;: &quot;2026-10-09T08:43:18.909Z&quot;,
+  &quot;results&quot;: [
+    {
+      &quot;event_id&quot;: &quot;EV-MQTT-LOCAL-001&quot;,
+      &quot;status&quot;: &quot;ACCEPTED&quot;,
+      &quot;message&quot;: &quot;Event processed&quot;
+    }
+  ],
+  &quot;state&quot;: {
+    &quot;net_total&quot;: 509,
+    &quot;processed_events&quot;: 3,
+    &quot;pending_ack&quot;: 2,
+    &quot;unresolved&quot;: 0,
+    &quot;duplicates&quot;: 1,
+    &quot;conflicts&quot;: 0,
+    &quot;rejected_submissions&quot;: 1
+  }
+}</pre></section>
+<section><h2>Stored response returned on replay</h2><pre>{
+  &quot;protocol_version&quot;: &quot;1.0&quot;,
+  &quot;candidate_id&quot;: &quot;CAND-LOCAL-DEMO&quot;,
+  &quot;challenge_id&quot;: &quot;CH-ASSESS-LOCAL-001&quot;,
+  &quot;status&quot;: &quot;COMPLETED&quot;,
+  &quot;processed_at&quot;: &quot;2026-10-09T08:43:18.909Z&quot;,
+  &quot;results&quot;: [
+    {
+      &quot;event_id&quot;: &quot;EV-MQTT-LOCAL-001&quot;,
+      &quot;status&quot;: &quot;ACCEPTED&quot;,
+      &quot;message&quot;: &quot;Event processed&quot;
+    }
+  ],
+  &quot;state&quot;: {
+    &quot;net_total&quot;: 509,
+    &quot;processed_events&quot;: 3,
+    &quot;pending_ack&quot;: 2,
+    &quot;unresolved&quot;: 0,
+    &quot;duplicates&quot;: 1,
+    &quot;conflicts&quot;: 0,
+    &quot;rejected_submissions&quot;: 1
+  }
+}</pre></section></main></html>

@@ -1,0 +1,114 @@
+﻿{
+    "accepted_count_500":  {
+                               "results":  [
+                                               {
+                                                   "event_id":  "EV-ASSESS-500",
+                                                   "status":  "ACCEPTED",
+                                                   "message":  "Event processed"
+                                               }
+                                           ]
+                           },
+    "duplicate_delivery":  {
+                               "results":  [
+                                               {
+                                                   "event_id":  "EV-ASSESS-500",
+                                                   "status":  "DUPLICATE",
+                                                   "message":  "Identical event already received; not processed again"
+                                               }
+                                           ]
+                           },
+    "rejected_count_501":  {
+                               "results":  [
+                                               {
+                                                   "event_id":  "EV-ASSESS-501",
+                                                   "status":  "REJECTED",
+                                                   "message":  "COUNT quantity must be an integer from 1 to 500, inclusive",
+                                                   "reason":  "COUNT quantity must be an integer from 1 to 500, inclusive"
+                                               }
+                                           ]
+                           },
+    "accepted_count_for_ack":  {
+                                   "results":  [
+                                                   {
+                                                       "event_id":  "EV-ASSESS-ACK",
+                                                       "status":  "ACCEPTED",
+                                                       "message":  "Event processed"
+                                                   }
+                                               ]
+                               },
+    "acknowledgement":  {
+                            "results":  [
+                                            {
+                                                "event_id":  "EV-ASSESS-ACK",
+                                                "status":  "ACKED",
+                                                "message":  "Acknowledged"
+                                            }
+                                        ]
+                        },
+    "summary":  {
+                    "view":  "summary",
+                    "source_id":  "LINE-ASSESS-01",
+                    "net_total":  506,
+                    "processed_events":  2,
+                    "pending_ack":  1,
+                    "unresolved":  0,
+                    "duplicates":  1,
+                    "conflicts":  0,
+                    "rejected_submissions":  1,
+                    "sources":  [
+                                    "LINE-ASSESS-01"
+                                ],
+                    "mqtt":  {
+                                 "enabled":  true,
+                                 "connected":  false,
+                                 "candidate_id":  "CAND-XXX",
+                                 "broker":  "mqtt://152.42.238.142:1883",
+                                 "last_heartbeat_at":  null,
+                                 "last_challenge_id":  null,
+                                 "last_challenge_at":  null,
+                                 "last_response_status":  null,
+                                 "challenge_counts":  {
+                                                          "total":  0,
+                                                          "completed":  0,
+                                                          "failed":  0
+                                                      },
+                                 "last_error":  null
+                             }
+                },
+    "pending":  {
+                    "view":  "pending",
+                    "source_id":  "LINE-ASSESS-01",
+                    "count":  1,
+                    "items":  [
+                                  {
+                                      "source_id":  "LINE-ASSESS-01",
+                                      "event_id":  "EV-ASSESS-500",
+                                      "type":  "COUNT",
+                                      "quantity":  500,
+                                      "target_event_id":  null,
+                                      "event_time":  "2026-10-09T08:41:57.000Z",
+                                      "received_at":  "2026-10-09T08:41:57.554Z",
+                                      "status":  "PROCESSED"
+                                  }
+                              ]
+                },
+    "exceptions":  {
+                       "view":  "exceptions",
+                       "source_id":  "LINE-ASSESS-01",
+                       "count":  1,
+                       "items":  [
+                                     {
+                                         "kind":  "ATTEMPT",
+                                         "source_id":  "LINE-ASSESS-01",
+                                         "event_id":  "EV-ASSESS-501",
+                                         "type":  "COUNT",
+                                         "quantity":  501,
+                                         "target_event_id":  null,
+                                         "event_time":  null,
+                                         "status":  "REJECTED",
+                                         "reason":  "COUNT quantity must be an integer from 1 to 500, inclusive",
+                                         "received_at":  "2026-10-09T08:41:57.653Z"
+                                     }
+                                 ]
+                   }
+}
