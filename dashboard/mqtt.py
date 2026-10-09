@@ -117,7 +117,15 @@ def _completed(candidate_id, challenge_id, results, state, now):
         ],
         "state": {
             key: state[key]
-            for key in ("net_total", "processed_events", "pending_ack", "unresolved", "duplicates", "conflicts")
+            for key in (
+                "net_total",
+                "processed_events",
+                "pending_ack",
+                "unresolved",
+                "duplicates",
+                "conflicts",
+                "rejected_submissions",
+            )
         },
     }
 

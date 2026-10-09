@@ -50,7 +50,8 @@
 <header>
   <h1>NorthBridge Garments <small>Production event dashboard &middot; CSI Smart Tech demo</small></h1>
   <div class="row"><span><span class="dot" id="hdrDot"></span><span id="hdrMqtt">MQTT: checking...</span></span>
-    <label>Line <select id="srcFilter"><option value="">All lines</option></select></label>
+    <label>Production source <select id="srcFilter"><option value="">All sources</option></select></label>
+    <span id="sourceState" class="who" role="status" aria-live="polite">Loading sources...</span>
     <button class="sec" id="refreshBtn" style="background:#fff">Refresh</button></div>
 </header>
 
@@ -66,6 +67,7 @@
     <p class="who">Paste ONE JSON event or a JSON array, then submit. Use a template to start.</p>
     <div class="row" style="margin-bottom:8px">
       <button class="sec" data-tpl="count">COUNT +5 (LINE-01)</button>
+      <button class="sec" data-tpl="count_over_limit">COUNT 501 (rejected)</button>
       <button class="sec" data-tpl="dup">Same event again</button>
       <button class="sec" data-tpl="void_early">VOID before COUNT</button>
       <button class="sec" data-tpl="void_target">The target COUNT</button>
@@ -130,6 +132,7 @@
       ['pending_ack', 'Pending acknowledgement', s.pending_ack ? 'warn' : ''],
       ['unresolved', 'Unresolved references', s.unresolved ? 'warn' : ''],
       ['duplicates', 'Duplicates', s.duplicates ? 'warn' : ''], ['conflicts', 'Conflicts', s.conflicts ? 'bad' : ''],
+      ['rejected_submissions', 'Rejected submissions', s.rejected_submissions ? 'bad' : ''],
     ];
     $('indicators').innerHTML = items.map(([k, l, c]) => `<div class="ind ${c}"><div class="n">${esc(s[k])}</div><div class="l">${l}</div></div>`).join('');
   }
@@ -189,12 +192,16 @@
 
   async function loadSources() {
     const current = src();
+    $('sourceState').textContent = 'Loading sources...';
     try {
       const summary = await api('/api/state?view=summary');
       const ids = new Set(summary.sources || []);
       if (current) ids.add(current);
-      $('srcFilter').innerHTML = '<option value="">All lines</option>' + [...ids].sort().map((s) => `<option ${s === current ? 'selected' : ''}>${esc(s)}</option>`).join('');
-    } catch { /* keep current options */ }
+      $('srcFilter').innerHTML = '<option value="">All sources</option>' + [...ids].sort().map((s) => `<option ${s === current ? 'selected' : ''}>${esc(s)}</option>`).join('');
+      $('sourceState').textContent = ids.size ? '' : 'No production sources yet.';
+    } catch {
+      $('sourceState').textContent = 'Sources unavailable.';
+    }
   }
 
   const refreshAll = () => Promise.all([loadSummary(), loadTable()]);
@@ -203,6 +210,7 @@
   const T = (o) => JSON.stringify({ source_id: 'LINE-01', target_event_id: null, quantity: null, event_time: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), ...o }, null, 2);
   const templates = {
     count: () => T({ event_id: 'EV-101', type: 'COUNT', quantity: 5 }),
+    count_over_limit: () => T({ event_id: 'EV-COUNT-501', type: 'COUNT', quantity: 501 }),
     dup: () => $('eventInput').value || T({ event_id: 'EV-101', type: 'COUNT', quantity: 5 }),
     void_early: () => T({ event_id: 'EV-V1', type: 'VOID', target_event_id: 'EV-102' }),
     void_target: () => T({ event_id: 'EV-102', type: 'COUNT', quantity: 3 }),

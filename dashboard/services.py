@@ -11,6 +11,7 @@ from .models import MqttChallenge, MqttRuntimeState, ProductionEvent, Production
 
 ITEM_STATUSES = {name: name for name in ("ACCEPTED", "DUPLICATE", "CONFLICT", "PENDING_REFERENCE", "REJECTED")}
 EVENT_TYPES = ("COUNT", "VOID")
+MAX_COUNT_QUANTITY = 500
 EVENT_TIME_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})$"
 )
@@ -62,8 +63,8 @@ def validate_event(raw):
     target = None
     if event_type == "COUNT":
         raw_quantity = raw.get("quantity")
-        if type(raw_quantity) is not int or raw_quantity <= 0 or raw_quantity > 2_147_483_647:
-            errors.append("COUNT quantity must be a positive integer")
+        if type(raw_quantity) is not int or not 1 <= raw_quantity <= MAX_COUNT_QUANTITY:
+            errors.append(f"COUNT quantity must be an integer from 1 to {MAX_COUNT_QUANTITY}, inclusive")
         else:
             quantity = raw_quantity
         if raw.get("target_event_id") is not None:
@@ -369,6 +370,7 @@ def get_summary(source_id=None):
         "unresolved": events.filter(status="PENDING_REFERENCE").count(),
         "duplicates": attempts.filter(classification="DUPLICATE").count(),
         "conflicts": attempts.filter(classification="CONFLICT").count(),
+        "rejected_submissions": attempts.filter(classification="REJECTED").count(),
     }
 
 
@@ -390,7 +392,9 @@ def get_pending(source_id=None):
 
 
 def get_sources():
-    return list(ProductionSource.objects.order_by("source_id").values_list("source_id", flat=True))
+    registered = ProductionSource.objects.values_list("source_id", flat=True)
+    submitted = SubmissionAttempt.objects.exclude(source_id__isnull=True).values_list("source_id", flat=True)
+    return sorted(set(registered).union(submitted))
 
 
 def get_exceptions(source_id=None):
