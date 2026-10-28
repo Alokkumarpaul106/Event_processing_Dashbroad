@@ -22,21 +22,6 @@ The system supports `COUNT` and `VOID` events, validates event data, tracks prod
 * Windows PowerShell
 * Git (optional)
 
-## Installation
-
-Open PowerShell and run:
-
-```powershell
-cd "E:\Django Task\EPD\iot_dashboard"
-
-py -m venv .venv
-
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-
-Copy-Item .env.example .env
-```
 
 ## Run the Project
 
@@ -88,53 +73,6 @@ Example:
 ```
 
 The quantity must be an integer between 1 and 500.
-
-Submit a COUNT using PowerShell:
-
-```powershell
-$count = @{
-  source_id = "LINE-01"
-  event_id = "EV-101"
-  type = "COUNT"
-  quantity = 5
-  target_event_id = $null
-  event_time = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
-}
-Invoke-RestMethod -Method Post `
-  -Uri "http://127.0.0.1:8000/api/events" `
-  -ContentType "application/json" `
-  -Body ($count | ConvertTo-Json)
-```
-
-`POST /api/events` also accepts an array of event objects. Each item receives an independent result.
-
-### VOID
-
-A `VOID` event corrects a previous `COUNT` event.
-
-* The target event must belong to the same production line.
-* Only one valid `VOID` is allowed per `COUNT`.
-* The original event is kept in the database.
-* The corrected quantity is removed from the net production total.
-
-The system can also resolve a `VOID` received before its target `COUNT`.
-
-Submit a VOID for an existing COUNT:
-
-```powershell
-$void = @{
-  source_id = "LINE-01"
-  event_id = "EV-VOID-101"
-  type = "VOID"
-  quantity = $null
-  target_event_id = "EV-101"
-  event_time = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
-}
-Invoke-RestMethod -Method Post `
-  -Uri "http://127.0.0.1:8000/api/events" `
-  -ContentType "application/json" `
-  -Body ($void | ConvertTo-Json)
-```
 
 ## Event Statuses
 
